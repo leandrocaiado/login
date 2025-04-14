@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport"
+		content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<link rel="stylesheet" href="/cssLogin.css">
+	<title>Entrada do usuário</title>
+	<script>
+		const params = new URLSearchParams(window.location.search);
+		const nome = atob(params.get("username"));
+		const senha = atob(params.get("senha"));
+		const menssagemPopup = params.get("menssagem");
+
+
+
+		function addLinha(listaProduto) {
+
+			const produtos = JSON.parse(listaProduto);
+			document.getElementById("produtos").value = listaProduto;
+			const produto = {
+				id: 1,
+				nome: "Café",
+				descricao: "Café torrado",
+				preco: 10,
+				tipo: "Bebida",
+				quantidade: 100,
+				ativo: "T"
+			};
+
+			const listaProdutos = produtos;
+
+			document.getElementById("tabela-produtos").getElementsByTagName("tbody")[0].innerHTML = ""; // Limpa a tabela
+			produtos.forEach(produto => {
+				const linha = document.getElementById("tabela-produtos").getElementsByTagName("tbody")[0].insertRow();
+
+				linha.insertCell().textContent = produto.id;
+				linha.insertCell().textContent = produto.nome;
+				linha.insertCell().textContent = produto.descricao;
+				linha.insertCell().textContent = produto.preco;
+				linha.insertCell().textContent = produto.tipo;
+				linha.insertCell().textContent = produto.quantidade;
+
+				linha.insertCell().textContent = produto.ativo;
+
+				var nomeTag = "'" + produto.nome + "'"
+				var descricaoTag = "'" + produto.descricao + "'"
+				var precoTag = "'" + produto.preco + "'"
+				var tipoTag = "'" + produto.tipo + "'"
+				var quantidadeTag = "'" + produto.quantidade + "'"
+				var ativoTag = "'" + produto.ativo + "'"
+				
+
+				
+				const cell = linha.insertCell().id = "celula-editar" + produto.id;
+				document.getElementById("celula-editar" + produto.id).innerHTML = '<a href="#" onclick="editar(' + produto.id + ',' + nomeTag +',' + descricaoTag +',' + precoTag + ',' + tipoTag + ',' + quantidadeTag +',' + ativoTag + ')"><img style="height: 60px;    width: 60px;" src="src/imgs/editar.png" title="editar" alt="Editar"><a href="#" onclick="deletar(' + produto.id + ',' + nomeTag + ')"><img src="src/imgs/lixo.png" title="Deletar" style="height: 60px;    width: 60px;" alt="Deletar"></a>';
+
+			});
+		}
+
+	</script>
+
+	<style>
+		
+		/* Estilo do fundo escurecido */
+.popup {
+  display: none; /* Oculta o pop-up por padrão */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.5); /* Fundo semi-transparente */
+  z-index: 1000;
+}
+
+/* Estilo do conteúdo do pop-up */
+.popup-conteudo {
+  background-color: #fff;
+  padding: 20px;
+  margin: 15% auto;
+  width: 300px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+
+
+
+		table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 10px;
+		}
+
+		th,
+		td {
+			border: 1px solid #aaa;
+			padding: 8px;
+			text-align: left;
+		}
+
+		th {
+			background-color: #f2f2f2;
+		}
+
+		#filtro {
+			margin-bottom: 10px;
+			padding: 5px;
+			width: 200px;
+		}
+
+		form {
+			height: 920px;
+			width: 800px;
+			background-color: #dde5f4;
+			position: absolute;
+			transform: translate(-50%, -50%);
+			top: 50%;
+			left: 50%;
+			border-radius: 10px;
+			backdrop-filter: blur(5px);
+			border: 2px solid rgba(255, 255, 255, 0.1);
+			box-shadow: 0 0 40px rgba(8, 7, 16, 0.6);
+			padding: 50px 35px;
+		}
+	</style>
+
+</head>
+
+
+<body id="conteudo">
+	
+	<div id="popup" class="popup" hidden >
+  <div class="popup-conteudo">
+    <div id="menssagemPopup" ></div>
+    <button onclick="toggleDiv()">OK</button>
+  </div>
+</div>
+
+
+
+	<div class="screen">
+		<form id="form-Login">
+			<div class="headLogin" style="background-color: #58b747;">
+				<img src="src\imgs\Hotpot-removebg-preview.png" title="LogoERP">
+			</div>
+			<div id="bodyCadastro">
+				<h1>Bem-vindo</h1>
+				<div id="mensagem"></div>
+			</div>
+
+
+			<h2>Lista de Produtos</h2>
+			<input type="text" id="filtro" placeholder="Pesquisar por nome...">
+			<input type="hidden" id="produtos" placeholder="">
+
+			<table id="tabela-produtos">
+				<thead>
+					<tr>
+						<th>ID</th>
+						<th>Nome</th>
+						<th>Descrição</th>
+						<th>Preço</th>
+						<th>Tipo</th>
+						<th>Quantidade</th>
+						<th>Ativo</th>
+						<th>Ação</th>
+					</tr>
+				</thead>
+				<tbody>
+					<!-- Linhas serão inseridas aqui via JavaScript -->
+				</tbody>
+			</table>
+
+		</form>
+	</div>
+
+
+</body>
+
+<script>
+	const formLogin = document.getElementById("form-Login")
+
+
+
+
+	const data = {
+		"username": nome,
+		"senha": senha
+
+	}
+
+
+
+	fetch("http://localhost:8090/consultaProduto", {
+
+		method: "POST",
+		headers: {
+			'Content-Type': 'application/json',
+			'Authorization': `Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJjYXZhbG8iLCJpYXQiOjE3MzA3MzE2NjAsImV4cCI6MTczMDgxODA2MH0.-aHB882NMQixIV_4jE1UlBAmW0R-MgNi8Vv7gaSoI1g`
+
+		},
+
+		body: JSON.stringify(data)
+
+	}).then(response => {
+		//alert(response.status)
+		if (response.status == 200 /*OK*/) {
+			var listaProduto = response.headers.get('listaProduto');
+
+			document.getElementById("mensagem").innerHTML = nome;
+		
+			if(menssagemPopup+"" != "null"){
+				
+				document.getElementById("popup").style.display = "block";
+				document.getElementById("menssagemPopup").innerHTML = menssagemPopup;
+			}
+			
+			addLinha(listaProduto);
+
+
+
+		} else if (response.status == 401 /*Unauthorized*/) {
+			alert("Credenciais invalidas!")
+		} else if (response.status == 404 /*Not Found*/) {
+			alert("Usuário nao encontrado!")
+		} else {
+			console.log(response)
+			alert("Ocorreu uma falha")
+		}
+	}).catch(e => {
+		alert("Erro:", e.toString())
+	})
+
+function toggleDiv() {
+  var div = document.getElementById("popup");
+  if (div.style.display === "none") {
+    div.style.display = "block";
+  } else {
+    div.style.display = "none";
+  }
+}
+
+
+
+ 
+ function editar(id,produto,descricao,preco,tipo,quantidade,ativo) {
+
+ window.location.replace("http://localhost:8090/be.html?username=" + params.get("username") + "&senha=" + params.get("senha")+ "&id="+id+ "&produto="+produto+ "&descricao="+descricao	 + "&preco="+preco	 + "&tipo="+tipo	 + "&quantidade="+quantidade	 + "&ativo="+ativo  );
+
+ 
+ 
+ 
+ }
+ 
+ function deletar(id,produto) {
+    
+
+    			window.location.replace("http://localhost:8090/bd.html?username=" + params.get("username") + "&senha=" + params.get("senha")+ "&id="+id+ "&produto="+produto  );
+		
+  }
+
+
+	// Função para exibir os produtos na lista
+	function exibirProdutos() {
+		// Limpa a lista atual
+		document.getElementById("tabela-produtos").getElementsByTagName("tbody")[0].innerHTML = "";
+		const produtos = JSON.parse(document.getElementById("produtos").value);
+		const termo = filtro.value.toUpperCase();
+
+		// Filtra os produtos com base no nome
+
+		// Filtra os produtos com base no nome
+		const produtosFiltrados = produtos.filter(produto =>
+			produto.nome.toUpperCase().includes(termo)
+		);
+
+
+		produtosFiltrados.forEach(produto => {
+			const linha = document.getElementById("tabela-produtos").getElementsByTagName("tbody")[0].insertRow();
+
+			linha.insertCell().textContent = produto.id;
+			linha.insertCell().textContent = produto.nome;
+			linha.insertCell().textContent = produto.descricao;
+			linha.insertCell().textContent = produto.preco;
+			linha.insertCell().textContent = produto.tipo;
+			linha.insertCell().textContent = produto.quantidade;
+			linha.insertCell().textContent = produto.ativo;
+
+
+			const cell = linha.insertCell().id = "celula-editar" + produto.id;
+			document.getElementById("celula-editar" + produto.id).innerHTML = '<a href="#" onclick="editar(' + produto.id + ',' + nomeTag +',' + descricaoTag +',' + precoTag + ',' + tipoTag + ',' + quantidadeTag +',' + ativoTag + ')"><img style="height: 60px;    width: 60px;" src="src/imgs/editar.png" title="editar" alt="Editar"><a href="#" onclick="deletar(' + produto.id + ',' + nomeTag + ')"><img src="src/imgs/lixo.png" title="Deletar" style="height: 60px;    width: 60px;" alt="Deletar"></a>';
+
+		});
+
+	}
+
+
+	const input = document.getElementById('filtro');
+
+	input.addEventListener('keydown', function (event) {
+		if (event.key === 'Enter') {
+			event.preventDefault();
+			// Aqui você pode adicionar outras ações, se necessário
+		}
+
+		const produto = {
+			id: 1,
+			nome: "Café",
+			descricao: "Café torrado",
+			preco: 10,
+			tipo: "Bebida",
+			quantidade: 100,
+			ativo: "T"
+		};
+
+
+
+
+
+		// Exibe os produtos filtrados
+		exibirProdutos();
+	});
+
+
+
+
+
+
+</script>
+
+
+</html>

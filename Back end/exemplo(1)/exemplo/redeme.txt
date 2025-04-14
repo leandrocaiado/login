@@ -1,0 +1,17 @@
+
+execultar classe 
+ExemploApplication
+
+tela inicial
+
+http://localhost:8090/loginForm.html
+
+objetivo
+fazer um sistema com api e html para ser facil a instalacao
+
+seguranca
+login, senha e token tipo jwt
+
+banco de dados 
+h2
+não esquece de manter o sorriso no rosto !
